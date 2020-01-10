@@ -4,16 +4,16 @@ import processing.core.PVector
 
 //position: 位置座標, velocity:速度, acceleration:加速度
 data class Boid(var position: PVector, var velocity: PVector, var acceleration: PVector)
-const val BOID_BODY_SIZE = 2f
-const val BOID_MAX_FORCE = 0.03f
-const val BOID_MAX_SPEED = 2f
-const val BOID_AMOUNT = 100
+const val BOID_BODY_SIZE = 4f
+const val BOID_MAX_FORCE = 0.06f
+const val BOID_MAX_SPEED = 4f
+const val BOID_AMOUNT = 500
 
 class BoidBehaviour{
     companion object{
         //分離(他のBoidオブジェクトと接触しないように距離を取る)
         fun separate(me:Boid, others: MutableList<Boid>): PVector {
-            val desiredSeparation = 25.0f //距離25程度の間は空けたい
+            val desiredSeparation = 20.0f //間はこの程度空けたい
             val steer = PVector(0f, 0f, 0f)
             var count = 0 //近すぎると判断した個体数
             for (other in others) {
@@ -41,7 +41,7 @@ class BoidBehaviour{
 
         //整列(他のBoidオブジェクトと同じ方向を向くように修正)
         fun align(me:Boid, boids: MutableList<Boid>): PVector {
-            val neighborDist = 50f //この距離の中で整列を試みる。
+            val neighborDist = 100f //この距離の中で整列を試みる。
             val sum = PVector(0f, 0f, 0f)
             var count = 0
             for (other in boids) {
@@ -65,7 +65,7 @@ class BoidBehaviour{
 
         //結合(群の中心に向かう)
         fun cohesion(me:Boid, boids: MutableList<Boid>): PVector {
-            val neighborDist = 50f //この半径距離の中で群の中心を探す
+            val neighborDist = 100f //この半径距離の中で群の中心を探す
             val sum = PVector(0f, 0f, 0f)
             var count = 0
             for (other in boids) {

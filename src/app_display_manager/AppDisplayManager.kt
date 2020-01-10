@@ -14,11 +14,11 @@ import processing.core.PVector
 
 
 //メインウィンドウ
-const val WINDOW_WIDTH = 920f
-const val WINDOW_HEIGHT = 600f
+const val WINDOW_WIDTH = 1440f
+const val WINDOW_HEIGHT = 900f
 
 //ワールド設定
-const val W_SIZE = 300f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
+const val W_SIZE = 600f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
 
 class AppDisplayManager : PApplet (){
     fun run(args: Array<String>) : Unit = PApplet.main(AppDisplayManager::class.qualifiedName) //processing起動
@@ -28,7 +28,6 @@ class AppDisplayManager : PApplet (){
         size(WINDOW_WIDTH.toInt(), WINDOW_HEIGHT.toInt(), PConstants.P3D)
         //fullScreen(PConstants.P2D)
     }
-
 
     //Boid設定
     private lateinit var boids : MutableList<Boid>
@@ -87,9 +86,9 @@ class AppDisplayManager : PApplet (){
            val ali: PVector = align(it, boids) //整列
            val coh: PVector = cohesion(it, boids) //結合
            //パラメータ調整
-           sep.mult(1.5f)
-           ali.mult(1.0f)
-           coh.mult(1.0f)
+           sep.mult(1.5f) //分離
+           ali.mult(1.0f) //整列
+           coh.mult(1.0f) //結合
            it.acceleration.add(sep).add(ali).add(coh)
        }
 
@@ -108,8 +107,8 @@ class AppDisplayManager : PApplet (){
             rotateY(atan2(it.velocity.x, it.velocity.z) + PConstants.HALF_PI)
             beginShape(PConstants.TRIANGLES)
             vertex(0f, -BOID_BODY_SIZE * 2, 0f)
-            vertex(-BOID_BODY_SIZE, BOID_BODY_SIZE * 2, 0f)
-            vertex(BOID_BODY_SIZE, BOID_BODY_SIZE * 2, 0f)
+            vertex(-BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+            vertex(BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
             endShape()
             popMatrix()
         }
