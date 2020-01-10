@@ -7,7 +7,9 @@ data class Boid(var position: PVector, var velocity: PVector, var acceleration: 
 const val BOID_BODY_SIZE = 4f
 const val BOID_MAX_FORCE = 0.06f
 const val BOID_MAX_SPEED = 4f
-const val BOID_AMOUNT = 500
+const val BOID_AMOUNT = 200
+
+data class BoidBehaviourParameter(val desiredSeparation: Float, val neighborDistAlign: Float, val neighborDistCohesion: Float)
 
 class BoidBehaviour{
     companion object{

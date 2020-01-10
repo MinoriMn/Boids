@@ -18,7 +18,7 @@ const val WINDOW_WIDTH = 1440f
 const val WINDOW_HEIGHT = 900f
 
 //ワールド設定
-const val W_SIZE = 600f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
+const val W_SIZE = 500f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
 
 class AppDisplayManager : PApplet (){
     fun run(args: Array<String>) : Unit = PApplet.main(AppDisplayManager::class.qualifiedName) //processing起動
@@ -30,25 +30,34 @@ class AppDisplayManager : PApplet (){
     }
 
     //Boid設定
-    private lateinit var boids : MutableList<Boid>
+    private lateinit var boidsG1 : MutableList<Boid>
+    private lateinit var boidsG2 : MutableList<Boid>
 
     override fun setup(){
-        fill(0xff)
-        stroke(0xff)
         frameRate(60f)
 
         hint(PConstants.DISABLE_DEPTH_TEST)
         hint(PConstants.DISABLE_OPENGL_ERRORS)
 
         //boids初期化
-        boids = mutableListOf()
+        boidsG1 = mutableListOf()
         val r = 30f
         for (i in 0..BOID_AMOUNT){
-            val position = PVector(random(-r, r), random(-r, r), random(-r, r))
+            val position = PVector(random(-r, r) + W_SIZE/2, random(-r, r), random(-r, r))
             val velocity = PVector(random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED))
             val acceleration = PVector(0f, 0f, 0f)
 
-            boids.add(Boid(position, velocity, acceleration))
+            boidsG1.add(Boid(position, velocity, acceleration))
+        }
+
+        boidsG2 = mutableListOf()
+        val r2 = 30f
+        for (i in 0..BOID_AMOUNT){
+            val position = PVector(random(-r2, r2) - W_SIZE/2, random(-r2, r2), random(-r2, r2))
+            val velocity = PVector(random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED))
+            val acceleration = PVector(0f, 0f, 0f)
+
+            boidsG2.add(Boid(position, velocity, acceleration))
         }
     }
 
@@ -61,6 +70,7 @@ class AppDisplayManager : PApplet (){
         rotateY(map(mouseX.toFloat(), 0f, WINDOW_WIDTH, -HALF_PI, HALF_PI))
 
         //境界線表示
+        stroke(0xff)
         line(-W_SIZE, -W_SIZE, -W_SIZE, W_SIZE, -W_SIZE, -W_SIZE)
         line(W_SIZE, -W_SIZE, -W_SIZE, W_SIZE, -W_SIZE, W_SIZE)
         line(W_SIZE, -W_SIZE, W_SIZE, -W_SIZE, -W_SIZE, W_SIZE)
@@ -76,31 +86,59 @@ class AppDisplayManager : PApplet (){
         line(W_SIZE, -W_SIZE, W_SIZE, W_SIZE, W_SIZE, W_SIZE)
         line(-W_SIZE, -W_SIZE, W_SIZE, -W_SIZE, W_SIZE, W_SIZE)
 
+        noStroke()
         boidsRender()
     }
     //Boidsの更新
     private fun boidsUpdate() {
         //加速度更新
-       boids.forEach{
-           val sep: PVector = separate(it, boids) //分離
-           val ali: PVector = align(it, boids) //整列
-           val coh: PVector = cohesion(it, boids) //結合
+       boidsG1.forEach{
+           val sep: PVector = separate(it, boidsG1) //分離
+           val ali: PVector = align(it, boidsG1) //整列
+           val coh: PVector = cohesion(it, boidsG1) //結合
            //パラメータ調整
            sep.mult(1.5f) //分離
            ali.mult(1.0f) //整列
            coh.mult(1.0f) //結合
            it.acceleration.add(sep).add(ali).add(coh)
        }
+        boidsG2.forEach{
+            val sep: PVector = separate(it, boidsG2) //分離
+            val ali: PVector = align(it, boidsG2) //整列
+            val coh: PVector = cohesion(it, boidsG2) //結合
+            //パラメータ調整
+            sep.mult(1.5f) //分離
+            ali.mult(1.0f) //整列
+            coh.mult(1.0f) //結合
+            it.acceleration.add(sep).add(ali).add(coh)
+        }
 
         //position更新
-        boids.forEach{
+        boidsG1.forEach{
+            update(it)
+        }
+        boidsG2.forEach{
             update(it)
         }
     }
 
     //Boidの描画
     private fun boidsRender(): Unit {
-        boids.forEach {
+        fill(0xff)
+        boidsG1.forEach {
+            pushMatrix()
+            translate(it.position.x, it.position.y, it.position.z)
+            rotateZ(atan2(it.velocity.y, it.velocity.x) + PConstants.HALF_PI)
+            rotateY(atan2(it.velocity.x, it.velocity.z) + PConstants.HALF_PI)
+            beginShape(PConstants.TRIANGLES)
+            vertex(0f, -BOID_BODY_SIZE * 2, 0f)
+            vertex(-BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+            vertex(BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+            endShape()
+            popMatrix()
+        }
+        fill(255f, 0f, 0f)
+        boidsG2.forEach {
             pushMatrix()
             translate(it.position.x, it.position.y, it.position.z)
             rotateZ(atan2(it.velocity.y, it.velocity.x) + PConstants.HALF_PI)
