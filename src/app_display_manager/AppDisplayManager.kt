@@ -43,7 +43,7 @@ class AppDisplayManager : PApplet (){
         boids = mutableListOf()
         enemies = mutableListOf()
         val r = 30f
-        for (i in 0..BOID_AMOUNT){
+        for (i in 1..BOID_AMOUNT){
             val position = PVector(random(-r, r), random(-r, r), random(-r, r))
 //            val position = PVector(random(-W_SIZE, W_SIZE), random(-W_SIZE, W_SIZE), random(-W_SIZE, W_SIZE))
             val velocity = PVector(random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED))
@@ -53,8 +53,10 @@ class AppDisplayManager : PApplet (){
         }
 
         /**敵の生成*/
-        enemies.add(Boid(PVector(600f, 600f, 600f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
-        enemies.add(Boid(PVector(-600f, -600f, -600f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+        enemies.add(Boid(PVector(-550f, 550f, -550f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+        enemies.add(Boid(PVector(500f, 500f, 500f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+        enemies.add(Boid(PVector(-300f, -300f, 300f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+        enemies.add(Boid(PVector(250f, -250f, -250f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
     }
 
     override fun draw(){
@@ -62,6 +64,9 @@ class AppDisplayManager : PApplet (){
         enemiesUpdate()
 
         background(0)
+        stroke(255f)
+        text("remaining boids: ${boids.size}", 10f, 35f) // 表示するテキスト, x座標, y座標
+
         translate(WINDOW_WIDTH/2f, WINDOW_HEIGHT/2f)
         rotateX(map(mouseY.toFloat(), 0f, WINDOW_HEIGHT, -HALF_PI, HALF_PI))
         rotateY(map(mouseX.toFloat(), 0f, WINDOW_WIDTH, -HALF_PI, HALF_PI))
@@ -112,7 +117,7 @@ class AppDisplayManager : PApplet (){
     //enemiesの更新
     private fun enemiesUpdate() {
         enemies.forEach {
-            val atk = EnemyBehaviour.attack(it, boids)
+            val atk = EnemyBehaviour.attack(it, boids, this)
 
             it.acceleration.add(atk)
         }
@@ -144,6 +149,7 @@ class AppDisplayManager : PApplet (){
     //enemiesの描画
     private fun enemiesRender() {
         noFill()
+        stroke(255f, 50f)
         enemies.forEach{
             pushMatrix()
             val position = it.position

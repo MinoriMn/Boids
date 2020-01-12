@@ -1,6 +1,7 @@
 import app_display_manager.W_SIZE
+import processing.core.PApplet
+import processing.core.PApplet.map
 import processing.core.PVector
-
 
 //position: 位置座標, velocity:速度, acceleration:加速度
 data class Boid(var position: PVector, var velocity: PVector, var acceleration: PVector)
@@ -10,7 +11,7 @@ const val BOID_MAX_SPEED = 2f
 const val BOID_AMOUNT = 600
 
 const val ENEMY_BODY_SIZE = 20f
-const val ENEMY_MAX_FORCE = 0.5f
+const val ENEMY_MAX_FORCE = 0.8f
 const val ENEMY_MAX_SPEED = 10f
 
 //群衆側の行動
@@ -136,7 +137,7 @@ class BoidBehaviour {
 //敵の動き
 class EnemyBehaviour{
     companion object{
-        fun attack(enemy:Boid, boids:MutableList<Boid>): PVector{
+        fun attack(enemy:Boid, boids:MutableList<Boid>, pApplet: PApplet): PVector{
             var minDist = 99999f
             var nearestBoid = enemy
             boids.forEach { boid ->
@@ -147,7 +148,12 @@ class EnemyBehaviour{
                 }
             }
 
-            return PVector.sub(nearestBoid.position, enemy.position).limit(ENEMY_MAX_FORCE)
+            //捕食する
+            if(minDist < ENEMY_BODY_SIZE){
+                boids.remove(nearestBoid)
+            }
+
+            return PVector.sub(nearestBoid.position, enemy.position).normalize().mult(map(pApplet.random(1f), 0f, 1f, 0f, ENEMY_MAX_FORCE))
         }
 
         fun update(enemy:Boid): Unit {
