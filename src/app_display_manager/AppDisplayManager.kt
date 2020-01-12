@@ -4,14 +4,13 @@ import BOID_AMOUNT
 import BOID_BODY_SIZE
 import BOID_MAX_SPEED
 import Boid
-import BoidBehaviour.Companion.align
-import BoidBehaviour.Companion.cohesion
-import BoidBehaviour.Companion.separate
-import BoidBehaviour.Companion.update
+import BoidBehaviour
+import ENEMY_BODY_SIZE
+import ENEMY_MAX_FORCE
+import ENEMY_MAX_SPEED
 import processing.core.PApplet
 import processing.core.PConstants
 import processing.core.PVector
-
 
 //メインウィンドウ
 const val WINDOW_WIDTH = 1440f
@@ -31,9 +30,9 @@ class AppDisplayManager : PApplet (){
 
     //Boid設定
     private lateinit var boids : MutableList<Boid>
+    private lateinit var enemies : MutableList<Boid>
 
     override fun setup(){
-        fill(0xff)
         stroke(0xff)
         frameRate(60f)
 
@@ -42,14 +41,20 @@ class AppDisplayManager : PApplet (){
 
         //boids初期化
         boids = mutableListOf()
+        enemies = mutableListOf()
         val r = 30f
         for (i in 0..BOID_AMOUNT){
             val position = PVector(random(-r, r), random(-r, r), random(-r, r))
+//            val position = PVector(random(-W_SIZE, W_SIZE), random(-W_SIZE, W_SIZE), random(-W_SIZE, W_SIZE))
             val velocity = PVector(random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED), random(-BOID_MAX_SPEED, BOID_MAX_SPEED))
             val acceleration = PVector(0f, 0f, 0f)
 
             boids.add(Boid(position, velocity, acceleration))
         }
+
+        /**敵の生成*/
+        enemies.add(Boid(PVector(600f, 600f, 600f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+        enemies.add(Boid(PVector(-600f, -600f, -600f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
     }
 
     override fun draw(){
@@ -77,29 +82,55 @@ class AppDisplayManager : PApplet (){
         line(-W_SIZE, -W_SIZE, W_SIZE, -W_SIZE, W_SIZE, W_SIZE)
 
         boidsRender()
+
+        /**DEBUG 障害物表示*/
+        enemiesUpdate()
+        enemiesRender()
+
     }
+
+    //更新------------------------------------------------------------------
+
     //Boidsの更新
     private fun boidsUpdate() {
         //加速度更新
        boids.forEach{
-           val sep: PVector = separate(it, boids) //分離
-           val ali: PVector = align(it, boids) //整列
-           val coh: PVector = cohesion(it, boids) //結合
+           val sep: PVector = BoidBehaviour.separate(it, boids) //分離
+           val ali: PVector = BoidBehaviour.align(it, boids) //整列
+           val coh: PVector = BoidBehaviour.cohesion(it, boids) //結合
+           val avo: PVector = BoidBehaviour.avoid(it, enemies) //逃避
            //パラメータ調整
            sep.mult(1.5f) //分離
            ali.mult(1.0f) //整列
-           coh.mult(1.0f) //結合
-           it.acceleration.add(sep).add(ali).add(coh)
+           coh.mult(2.0f) //結合
+           avo.mult(10.0f) //逃避
+           it.acceleration.add(sep).add(ali).add(coh).add(avo)
        }
 
         //position更新
         boids.forEach{
-            update(it)
+            BoidBehaviour.update(it)
+        }
+    }
+    //enemiesの更新
+    private fun enemiesUpdate() {
+        enemies.forEach {
+            val atk = EnemyBehaviour.attack(it, boids)
+
+            it.acceleration.add(atk)
+        }
+
+        //position更新
+        enemies.forEach{
+            EnemyBehaviour.update(it)
         }
     }
 
+    //描画------------------------------------------------------------------
+
     //Boidの描画
     private fun boidsRender(): Unit {
+        fill(255f)
         boids.forEach {
             pushMatrix()
             translate(it.position.x, it.position.y, it.position.z)
@@ -110,6 +141,17 @@ class AppDisplayManager : PApplet (){
             vertex(-BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
             vertex(BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
             endShape()
+            popMatrix()
+        }
+    }
+    //enemiesの描画
+    private fun enemiesRender() {
+        noFill()
+        enemies.forEach{
+            pushMatrix()
+            val position = it.position
+            translate(position.x, position.y, position.z)
+            sphere(ENEMY_BODY_SIZE)
             popMatrix()
         }
     }
