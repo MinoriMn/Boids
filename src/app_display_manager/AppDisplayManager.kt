@@ -59,6 +59,7 @@ class AppDisplayManager : PApplet (){
 
     override fun draw(){
         boidsUpdate()
+        enemiesUpdate()
 
         background(0)
         translate(WINDOW_WIDTH/2f, WINDOW_HEIGHT/2f)
@@ -82,11 +83,7 @@ class AppDisplayManager : PApplet (){
         line(-W_SIZE, -W_SIZE, W_SIZE, -W_SIZE, W_SIZE, W_SIZE)
 
         boidsRender()
-
-        /**DEBUG 障害物表示*/
-        enemiesUpdate()
         enemiesRender()
-
     }
 
     //更新------------------------------------------------------------------
@@ -102,7 +99,7 @@ class AppDisplayManager : PApplet (){
            //パラメータ調整
            sep.mult(1.5f) //分離
            ali.mult(1.0f) //整列
-           coh.mult(2.0f) //結合
+           coh.mult(1.0f) //結合
            avo.mult(10.0f) //逃避
            it.acceleration.add(sep).add(ali).add(coh).add(avo)
        }
