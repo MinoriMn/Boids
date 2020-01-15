@@ -11,6 +11,6 @@
     <orderEntry type="library" name="processing" level="project" />
     <orderEntry type="library" name="au.com.bytecode:opencsv:2.4" level="project" />
     <orderEntry type="library" name="org.jetbrains.kotlin:kotlin-archetype-jvm:1.3.61" level="project" />
-    <orderEntry type="library" name="org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.2" level="project" />
+    <orderEntry type="library" name="org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2" level="project" />
   </component>
 </module>

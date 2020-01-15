@@ -11,6 +11,11 @@ import boundBoidsNumber
 import evaRst
 import gEva
 import groupNum
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+
 import processing.core.PApplet
 import processing.core.PConstants
 import processing.core.PVector
@@ -44,7 +49,7 @@ class AppDisplayManager : PApplet (){
     private val TIME_LIMIT = 1500 //制限時間
     private var generation = 0//世代
     private val GENERATION_LIMIT = 1//最終世代
-    private val MASS = 20//世代ごとの集団数
+    private val MASS = 100//世代ごとの集団数
 
     //Boid設定
     private lateinit var boids : MutableList<Boid>
@@ -122,8 +127,8 @@ class AppDisplayManager : PApplet (){
     override fun draw(){
         if(mode != MODE.EVOLUTION) {
             if (mode == MODE.NORMAL) {
-                boidsUpdate(boidsParameters[0])
-                enemiesUpdate()
+                boidsUpdate(boids, boidsParameters[0])
+                enemiesUpdate(enemies, boids)
                 time++
             }
 
@@ -166,52 +171,61 @@ class AppDisplayManager : PApplet (){
             enemiesRender()
         }else{
             //MODE_EVOLUTION 進化計算
-            for (gen in 0 until GENERATION_LIMIT){
-                for (idx in 0 until MASS){
-                    //シミュ開始
-                    println("第${gen}世代、idx:${idx}シミュ開始、R:${boids.size}")
+            runBlocking {
+                runAllSimulation()
+            }
+        }
 
-                    while (time++ < TIME_LIMIT){
-                        boidsUpdate(boidsParameters[idx])
-                        enemiesUpdate()
-                        if(boids.size == 0){//全滅時は強制終了
-                            break
-                        }
-                    }
+        mode = MODE.NORMAL
+        val bestBoidsParameter = boidsParameters[0]
+        boidsParameters = Array(1) {bestBoidsParameter}
+    }
+    suspend fun runAllSimulation(){
+        for (gen in 0 until GENERATION_LIMIT){
+            val rst = HashMap<Int, Deferred<MutableList<Boid>>>()
+            for (idx in 0 until MASS) {
+                //シミュ開始
+                println("第${gen}世代、idx:${idx}シミュ開始、R:${boids.size}")
+
+                val tmp = GlobalScope.async {
+                    runAMassSimulation(boidsParameters[idx])
+                }
+                rst[idx] = tmp
+            }
+            for (idx in 0 until MASS){
+                val boids = rst[idx]?.await()
+                if(boids != null){
                     //シミュ終了
                     Optimisation.evaluation(boids)
                     //評価
                     boidsEvaluation[idx] = evaRst
+
                     print("第${gen}世代、idx:${idx}シミュ終了、")
-                    if(Optimisation.IS_DEBUG){
+                    if (Optimisation.IS_DEBUG) {
                         print("R:${boids.size}、G:${groupNum}、Delta:${boundBoidsNumber < Optimisation.LIMIT_BIND_NUMBER}、")
                     }
                     kotlin.io.println("Eva:${evaRst}")
-
-                    resetBoids()
                 }
-
-                //評価順にソート
-                QuickSort.sortOfMass(boidsEvaluation, boidsParameters, 0, boidsEvaluation.size-1)
-
-                /**DEBUG*/
-                for (idx in 0 until MASS){
-                    println("$idx: ${boidsEvaluation[idx]}[${boidsParameters}]")
-                }
-
             }
+        }
 
-            mode = MODE.NORMAL
-            val bestBoidsParameter = boidsParameters[0]
-            boidsParameters = Array(1) {bestBoidsParameter}
+        //評価順にソート
+        QuickSort.sortOfMass(boidsEvaluation, boidsParameters, 0, boidsEvaluation.size-1)
+
+        /**DEBUG*/
+        for (idx in 0 until MASS){
+            println("$idx: ${boidsEvaluation[idx]}[${boidsParameters}]")
         }
     }
+
     //進化計算コルーチン用
-    fun runAMassSimulation(){
+    suspend fun runAMassSimulation(boidsParameter: BoidsParameter): MutableList<Boid>{
         val boids : MutableList<Boid> = mutableListOf()
         val enemies : MutableList<Boid> = mutableListOf()
 //boids初期化
         val r = 30f
+        var time = 0
+
         for (i in 1..BOID_AMOUNT){
             val position = PVector(random(-r, r), random(-r, r), random(-r, r))
 //            val position = PVector(random(-W_SIZE, W_SIZE), random(-W_SIZE, W_SIZE), random(-W_SIZE, W_SIZE))
@@ -224,12 +238,22 @@ class AppDisplayManager : PApplet (){
         /**敵の生成*/
         enemies.add(Boid(PVector(-550f, 550f, -550f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
         enemies.add(Boid(PVector(500f, 500f, 500f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+
+        while (time++ < TIME_LIMIT){
+            boidsUpdate(boids, boidsParameter)
+            enemiesUpdate(enemies, boids)
+            if(boids.size == 0){//全滅時は強制終了
+                break
+            }
+        }
+
+        return boids
     }
 
     //更新------------------------------------------------------------------
 
     //Boidsの更新
-    private fun boidsUpdate(boidsParameter: BoidsParameter) {
+    private fun boidsUpdate(boids: MutableList<Boid>, boidsParameter: BoidsParameter) {
         val sepR = boidsParameter.separateR
         val aliR = boidsParameter.alignR
         val cohR = boidsParameter.cohesionR
@@ -260,7 +284,7 @@ class AppDisplayManager : PApplet (){
         }
     }
     //enemiesの更新
-    private fun enemiesUpdate() {
+    private fun enemiesUpdate(enemies: MutableList<Boid>, boids: MutableList<Boid>) {
         enemies.forEach {
             val atk = EnemyBehaviour.attack(it, boids, this)
 
