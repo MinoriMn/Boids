@@ -32,6 +32,8 @@ var mode = MODE.NORMAL
 class AppDisplayManager : PApplet (){
     fun run(args: Array<String>) : Unit = PApplet.main(AppDisplayManager::class.qualifiedName) //processing起動
 
+    private var time = 0//経過時間
+
     override fun settings(){
         //TIS = Text Input Sources, TSM = Text Services Manager
         size(WINDOW_WIDTH.toInt(), WINDOW_HEIGHT.toInt(), PConstants.P3D)
@@ -73,16 +75,18 @@ class AppDisplayManager : PApplet (){
         if(mode == MODE.NORMAL) {
             boidsUpdate()
             enemiesUpdate()
+            time++
         }
 
         background(0)
         stroke(0f, 0f, 255f)
         fill(0f, 0f, 255f)
-        text("remaining boids: ${boids.size}", 10f, 35f) // 表示するテキスト, x座標, y座標
+        text("remaining boids: ${boids.size}", 10f, 30f) // 表示するテキスト, x座標, y座標
+        text("time: $time", 10f, 50f)
         if(mode == MODE.NORMAL_EVALUATION) {
-            text("group num: ${groupNum}, G: ${gEva}", 10f, 50f) // 表示するテキスト, x座標, y座標
-            text("bound num: ${boundBoidsNumber}, delta: ${boundBoidsNumber < Optimisation.LIMIT_BIND_NUMBER}", 10f, 65f)
-            text("ev: $evaluation", 10f, 80f)
+            text("group num: ${groupNum}, G: $gEva", 10f, 70f) // 表示するテキスト, x座標, y座標
+            text("bound num: ${boundBoidsNumber}, delta: ${boundBoidsNumber < Optimisation.LIMIT_BIND_NUMBER}", 10f, 90f)
+            text("ev: $evaluation", 10f, 110f)
         }
 
         translate(WINDOW_WIDTH/2f, WINDOW_HEIGHT/2f)
