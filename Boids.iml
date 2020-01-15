@@ -9,5 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="processing" level="project" />
+    <orderEntry type="library" name="org.processing:core:3.0b7" level="project" />
+    <orderEntry type="library" name="core1" level="project" />
   </component>
 </module>

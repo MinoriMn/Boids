@@ -17,7 +17,7 @@ const val WINDOW_WIDTH = 1440f
 const val WINDOW_HEIGHT = 900f
 
 //ワールド設定
-const val W_SIZE = 600f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
+const val W_SIZE = 150f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
 
 class AppDisplayManager : PApplet (){
     fun run(args: Array<String>) : Unit = PApplet.main(AppDisplayManager::class.qualifiedName) //processing起動
@@ -53,10 +53,10 @@ class AppDisplayManager : PApplet (){
         }
 
         /**敵の生成*/
-        enemies.add(Boid(PVector(-550f, 550f, -550f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
-        enemies.add(Boid(PVector(500f, 500f, 500f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
-        enemies.add(Boid(PVector(-300f, -300f, 300f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
-        enemies.add(Boid(PVector(250f, -250f, -250f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+//        enemies.add(Boid(PVector(-550f, 550f, -550f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+//        enemies.add(Boid(PVector(500f, 500f, 500f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+//        enemies.add(Boid(PVector(-300f, -300f, 300f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
+//        enemies.add(Boid(PVector(250f, -250f, -250f), PVector(0f, 0f, 0f), PVector(0f, 0f, 0f)))
     }
 
     override fun draw(){
@@ -101,12 +101,15 @@ class AppDisplayManager : PApplet (){
            val ali: PVector = BoidBehaviour.align(it, boids) //整列
            val coh: PVector = BoidBehaviour.cohesion(it, boids) //結合
            val avo: PVector = BoidBehaviour.avoid(it, enemies) //逃避
+           val kabeYokeru: PVector = BoidBehaviour.kabeYokeru(it)
+
            //パラメータ調整
-           sep.mult(1.5f) //分離
-           ali.mult(1.0f) //整列
-           coh.mult(1.0f) //結合
+           sep.mult(0.8f) //分離
+           ali.mult(0.3f) //整列
+           coh.mult(0.5f) //結合
            avo.mult(10.0f) //逃避
-           it.acceleration.add(sep).add(ali).add(coh).add(avo)
+           kabeYokeru.mult(1.0f)
+           it.acceleration.add(sep).add(ali).add(coh).add(avo).add(kabeYokeru)
        }
 
         //position更新
