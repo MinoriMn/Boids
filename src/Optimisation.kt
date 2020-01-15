@@ -1,4 +1,10 @@
 import processing.core.PVector
+import kotlin.math.exp
+
+var groupNum = 0f//グループ数
+var gEva = 0f//グループ数評価
+var boundBoidsNumber = 0//結合数
+var evaluation = 0f//評価値
 
 class Optimisation {
     companion object{
@@ -6,12 +12,12 @@ class Optimisation {
         private const val IS_DEBUG = true
         var boidsGroups : ArrayList<MutableList<Boid>>? = null
 
-        fun evaluation(boids : MutableList<Boid>) : Float{
+        fun evaluation(boids : MutableList<Boid>){
             //結合確認
             var copiedBoids = boids.toMutableList()
             val delta = isNotBind(copiedBoids)
 
-            return if(!IS_DEBUG || delta == 0){
+            evaluation = if(!IS_DEBUG || delta == 0){
                 0f
             }else{
                 //残存数
@@ -20,9 +26,11 @@ class Optimisation {
                 //グループ数カウント
                 boidsGroups = ArrayList()
                 copiedBoids = boids.toMutableList()
-                val g = countGroup(copiedBoids, boidsGroups!!).toFloat()
+                groupNum = countGroup(copiedBoids, boidsGroups!!).toFloat()
+                //シグモイド関数の適応
+                gEva = 1f / (1f + exp(3f * groupNum - 9f))
 
-                r * g
+                r * gEva
             }
         }
 
@@ -43,11 +51,11 @@ class Optimisation {
             }
 
             /**DEBUG*/
-            if(IS_DEBUG){
-                println("グループ数:${boidsGroups.size}")
-            }
+//            if(IS_DEBUG){
+//                println("グループ数:${boidsGroups.size}")
+//            }
 
-            return 0
+            return boidsGroups.size
         }
         private fun checkGroup(boidA: Boid, boids : MutableList<Boid>, detectedDist : Float, group : MutableList<Boid>){
             var boidsIterator = boids.iterator()
@@ -64,12 +72,12 @@ class Optimisation {
         }
 
         //結合してないか
-        private val LIMIT_BIND_NUMBER = (BOID_AMOUNT * 0.1).toInt() //これ以上結合しているなら破棄する
+        const val LIMIT_BIND_NUMBER = (BOID_AMOUNT * 0.1).toInt() //これ以上結合しているなら破棄する
 
         private fun isNotBind(boids : MutableList<Boid>) : Int{
             val detectedDist = BOID_BODY_SIZE * 2f
             var boidsIterator = boids.iterator()
-            var boundBoidsNumber = 0
+            boundBoidsNumber = 0
             while(boidsIterator.hasNext()){
                 val boid = boidsIterator.next()
                 boidsIterator.remove()
@@ -83,9 +91,9 @@ class Optimisation {
             }
 
             /**DEBUG*/
-            if(IS_DEBUG){
-                println("結合数:${boundBoidsNumber}")
-            }
+//            if(IS_DEBUG){
+//                println("結合数:${boundBoidsNumber}")
+//            }
 //            return 0
             return if(boundBoidsNumber < LIMIT_BIND_NUMBER) 1 else 0
         }

@@ -6,8 +6,10 @@ import BOID_MAX_SPEED
 import Boid
 import BoidBehaviour
 import ENEMY_BODY_SIZE
-import ENEMY_MAX_FORCE
-import ENEMY_MAX_SPEED
+import boundBoidsNumber
+import evaluation
+import gEva
+import groupNum
 import processing.core.PApplet
 import processing.core.PConstants
 import processing.core.PVector
@@ -75,7 +77,13 @@ class AppDisplayManager : PApplet (){
 
         background(0)
         stroke(0f, 0f, 255f)
+        fill(0f, 0f, 255f)
         text("remaining boids: ${boids.size}", 10f, 35f) // 表示するテキスト, x座標, y座標
+        if(mode == MODE.NORMAL_EVALUATION) {
+            text("group num: ${groupNum}, G: ${gEva}", 10f, 50f) // 表示するテキスト, x座標, y座標
+            text("bound num: ${boundBoidsNumber}, delta: ${boundBoidsNumber < Optimisation.LIMIT_BIND_NUMBER}", 10f, 65f)
+            text("ev: $evaluation", 10f, 80f)
+        }
 
         translate(WINDOW_WIDTH/2f, WINDOW_HEIGHT/2f)
         rotateX(map(mouseY.toFloat(), 0f, WINDOW_HEIGHT, -HALF_PI, HALF_PI))
@@ -159,7 +167,7 @@ class AppDisplayManager : PApplet (){
                 popMatrix()
             }
         }else if (mode  == MODE.NORMAL_EVALUATION){
-            while (Optimisation.isEvaluation){ }
+            while (Optimisation.isEvaluation){ }//評価終了を待つ
             if(Optimisation.boidsGroups != null){
                 val boidsGroups = Optimisation.boidsGroups!!
                 val hue = 255f / boidsGroups.size
@@ -180,7 +188,6 @@ class AppDisplayManager : PApplet (){
                     }
                 }
             }
-
         }
 
     }
