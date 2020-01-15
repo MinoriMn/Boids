@@ -19,6 +19,14 @@ const val WINDOW_HEIGHT = 900f
 //ワールド設定
 const val W_SIZE = 600f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
 
+//実行モード
+enum class MODE{
+    NORMAL,
+    EVOLUTION, //進化計算
+    NORMAL_EVALUATION //評価関数の確認用
+}
+var mode = MODE.NORMAL
+
 class AppDisplayManager : PApplet (){
     fun run(args: Array<String>) : Unit = PApplet.main(AppDisplayManager::class.qualifiedName) //processing起動
 
@@ -33,8 +41,8 @@ class AppDisplayManager : PApplet (){
     private lateinit var enemies : MutableList<Boid>
 
     override fun setup(){
-        stroke(0xff)
         frameRate(60f)
+        colorMode(PConstants.HSB) //カラーモードをHSBに変更
 
         hint(PConstants.DISABLE_DEPTH_TEST)
         hint(PConstants.DISABLE_OPENGL_ERRORS)
@@ -60,11 +68,13 @@ class AppDisplayManager : PApplet (){
     }
 
     override fun draw(){
-        boidsUpdate()
-        enemiesUpdate()
+        if(mode == MODE.NORMAL) {
+            boidsUpdate()
+            enemiesUpdate()
+        }
 
         background(0)
-        stroke(255f)
+        stroke(0f, 0f, 255f)
         text("remaining boids: ${boids.size}", 10f, 35f) // 表示するテキスト, x座標, y座標
 
         translate(WINDOW_WIDTH/2f, WINDOW_HEIGHT/2f)
@@ -132,19 +142,47 @@ class AppDisplayManager : PApplet (){
 
     //Boidの描画
     private fun boidsRender(): Unit {
-        fill(255f)
-        boids.forEach {
-            pushMatrix()
-            translate(it.position.x, it.position.y, it.position.z)
-            rotateZ(atan2(it.velocity.y, it.velocity.x) + PConstants.HALF_PI)
-            rotateY(atan2(it.velocity.x, it.velocity.z) + PConstants.HALF_PI)
-            beginShape(PConstants.TRIANGLES)
-            vertex(0f, -BOID_BODY_SIZE * 2, 0f)
-            vertex(-BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
-            vertex(BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
-            endShape()
-            popMatrix()
+        noStroke()
+        if(mode == MODE.NORMAL){
+            fill(0f, 0f, 255f)
+
+            boids.forEach {
+                pushMatrix()
+                translate(it.position.x, it.position.y, it.position.z)
+                rotateZ(atan2(it.velocity.y, it.velocity.x) + PConstants.HALF_PI)
+                rotateY(atan2(it.velocity.x, it.velocity.z) + PConstants.HALF_PI)
+                beginShape(PConstants.TRIANGLES)
+                vertex(0f, -BOID_BODY_SIZE * 2, 0f)
+                vertex(-BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+                vertex(BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+                endShape()
+                popMatrix()
+            }
+        }else if (mode  == MODE.NORMAL_EVALUATION){
+            while (Optimisation.isEvaluation){ }
+            if(Optimisation.boidsGroups != null){
+                val boidsGroups = Optimisation.boidsGroups!!
+                val hue = 255f / boidsGroups.size
+
+                for (i in 0 until boidsGroups.size){
+                    fill(hue * i, 255f, 255f)
+                    boidsGroups[i].forEach {
+                        pushMatrix()
+                        translate(it.position.x, it.position.y, it.position.z)
+                        rotateZ(atan2(it.velocity.y, it.velocity.x) + PConstants.HALF_PI)
+                        rotateY(atan2(it.velocity.x, it.velocity.z) + PConstants.HALF_PI)
+                        beginShape(PConstants.TRIANGLES)
+                        vertex(0f, -BOID_BODY_SIZE * 2, 0f)
+                        vertex(-BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+                        vertex(BOID_BODY_SIZE / 2, BOID_BODY_SIZE * 2, 0f)
+                        endShape()
+                        popMatrix()
+                    }
+                }
+            }
+
         }
+
     }
     //enemiesの描画
     private fun enemiesRender() {
@@ -160,16 +198,22 @@ class AppDisplayManager : PApplet (){
     }
 
     override fun keyPressed() {
-        //println("Pressed:$keyCode")
+//        println("Pressed:$keyCode")
         when(keyCode){
-
+            //0x46 = fキー押下
+            0x46 -> if(mode == MODE.NORMAL){
+                mode = MODE.NORMAL_EVALUATION
+                Optimisation.isEvaluation = true
+                Optimisation.evaluation(boids)
+                Optimisation.isEvaluation = false
+            }
         }
     }
 
     override fun keyReleased() {
         //println("Released:$keyCode")
         when(keyCode){
-
+            0x46 -> if(mode == MODE.NORMAL_EVALUATION) mode = MODE.NORMAL
         }
     }
 }
