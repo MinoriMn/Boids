@@ -12,7 +12,7 @@ class Optimisation {
         const val IS_DEBUG = true
         var boidsGroups : ArrayList<MutableList<Boid>>? = null
 
-        fun evaluation(boids : MutableList<Boid>){
+        fun evaluation(boids : MutableList<Boid>):Float{
             //結合確認
             var copiedBoids = boids.toMutableList()
             val delta = isNotBind(copiedBoids)
@@ -26,12 +26,13 @@ class Optimisation {
                 //グループ数カウント
                 boidsGroups = ArrayList()
                 copiedBoids = boids.toMutableList()
-                groupNum = countGroup(copiedBoids, boidsGroups!!).toFloat()
+                val groupNum = countGroup(copiedBoids, boidsGroups!!).toFloat()
                 //シグモイド関数の適応
                 gEva = 1f / (1f + exp(3f * groupNum - 9f))
 
                 r * gEva
             }
+            return evaRst
         }
 
         //グループ数のカウント
