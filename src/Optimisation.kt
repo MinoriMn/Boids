@@ -4,12 +4,12 @@ import kotlin.math.exp
 var groupNum = 0f//グループ数
 var gEva = 0f//グループ数評価
 var boundBoidsNumber = 0//結合数
-var evaluation = 0f//評価値
+var evaRst = 0f//評価値
 
 class Optimisation {
     companion object{
         var isEvaluation = false //評価中か
-        private const val IS_DEBUG = true
+        const val IS_DEBUG = true
         var boidsGroups : ArrayList<MutableList<Boid>>? = null
 
         fun evaluation(boids : MutableList<Boid>){
@@ -17,7 +17,7 @@ class Optimisation {
             var copiedBoids = boids.toMutableList()
             val delta = isNotBind(copiedBoids)
 
-            evaluation = if(!IS_DEBUG || delta == 0){
+            evaRst = if(!IS_DEBUG || delta == 0){
                 0f
             }else{
                 //残存数

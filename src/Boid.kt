@@ -5,6 +5,8 @@ import processing.core.PVector
 
 //position: 位置座標, velocity:速度, acceleration:加速度
 data class Boid(var position: PVector, var velocity: PVector, var acceleration: PVector)
+//Boids集団のパラメータ R:各ベクトルの適応範囲{(sep),(ali),(coh):BOID_BODY_SIZE * 2 ~ W_SIZE/3,  (avoid) ENEMY_BODY_SIZE ~ W_SIZE/3}、 P:各ベクトルの倍率(1.0 ~ 10.0)
+data class BoidsParameter(val separateR: Float, val alignR: Float, val cohesionR: Float, val avoidR: Float, val separateP: Float, val alignP: Float, val cohesionP: Float, val avoidP: Float)
 const val BOID_BODY_SIZE = 4f
 const val BOID_MAX_FORCE = 0.03f
 const val BOID_MAX_SPEED = 2f
@@ -18,8 +20,8 @@ const val ENEMY_MAX_SPEED = 3f
 class BoidBehaviour {
     companion object{
         //分離(他のBoidオブジェクトと接触しないように距離を取る)
-        fun separate(me:Boid, others: MutableList<Boid>): PVector {
-            val desiredSeparation = 20.0f //間はこの程度空けたい
+        fun separate(me:Boid, others: MutableList<Boid>, desiredSeparation: Float): PVector {
+//            val desiredSeparation = 20.0f //間はこの程度空けたい
             val steer = PVector(0f, 0f, 0f)
             var count = 0 //近すぎると判断した個体数
             for (other in others) {
@@ -46,8 +48,8 @@ class BoidBehaviour {
         }
 
         //整列(他のBoidオブジェクトと同じ方向を向くように修正)
-        fun align(me:Boid, boids: MutableList<Boid>): PVector {
-            val neighborDist = 100f //この距離の中で整列を試みる。
+        fun align(me:Boid, boids: MutableList<Boid>, neighborDist: Float): PVector {
+//            val neighborDist = 100f //この距離の中で整列を試みる。
             val sum = PVector(0f, 0f, 0f)
             var count = 0
             for (other in boids) {
@@ -70,8 +72,8 @@ class BoidBehaviour {
         }
 
         //結合(群の中心に向かう)
-        fun cohesion(me:Boid, boids: MutableList<Boid>): PVector {
-            val neighborDist = 100f //この半径距離の中で群の中心を探す
+        fun cohesion(me:Boid, boids: MutableList<Boid>, neighborDist: Float): PVector {
+//            val neighborDist = 100f //この半径距離の中で群の中心を探す
             val sum = PVector(0f, 0f, 0f)
             var count = 0
             for (other in boids) {
@@ -93,9 +95,9 @@ class BoidBehaviour {
         /**
          * enemies Pair<敵の座標, 敵の範囲(BodySize)>
          */
-        fun avoid(me:Boid, enemies: MutableList<Boid>): PVector {
+        fun avoid(me:Boid, enemies: MutableList<Boid>, neighborDist: Float): PVector {
             val sum = PVector(0f, 0f, 0f)
-            val neighborDist = 70f +  ENEMY_BODY_SIZE//この半径距離の中にいたら離れる
+//            val neighborDist = 70f +  ENEMY_BODY_SIZE//この半径距離の中にいたら離れる
             var count = 0
             for (enemy in enemies) {
                 val d = PVector.dist(me.position, enemy.position)
