@@ -7,6 +7,10 @@ import Boid
 import BoidBehaviour
 import BoidsParameter
 import ENEMY_BODY_SIZE
+import EnemyBehaviour
+import Optimisation
+import QuickSort
+import au.com.bytecode.opencsv.CSVWriter
 import boundBoidsNumber
 import evaRst
 import gEva
@@ -15,10 +19,19 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-
 import processing.core.PApplet
 import processing.core.PConstants
 import processing.core.PVector
+import java.io.File
+import java.io.FileWriter
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.collections.MutableList
+import kotlin.collections.forEach
+import kotlin.collections.isNotEmpty
+import kotlin.collections.mutableListOf
+import kotlin.collections.set
+
 
 //メインウィンドウ
 const val WINDOW_WIDTH = 1440f
@@ -49,7 +62,7 @@ class AppDisplayManager : PApplet (){
     private val TIME_LIMIT = 1500 //制限時間
     private var generation = 0//世代
     private val GENERATION_LIMIT = 1//最終世代
-    private val MASS = 100//世代ごとの集団数
+    private val MASS = 20//世代ごとの集団数
 
     //Boid設定
     private lateinit var boids : MutableList<Boid>
@@ -180,6 +193,8 @@ class AppDisplayManager : PApplet (){
         val bestBoidsParameter = boidsParameters[0]
         boidsParameters = Array(1) {bestBoidsParameter}
     }
+
+    //進化計算------------------------------------------------
     suspend fun runAllSimulation(){
         for (gen in 0 until GENERATION_LIMIT){
             val rst = HashMap<Int, Deferred<MutableList<Boid>>>()
@@ -207,17 +222,67 @@ class AppDisplayManager : PApplet (){
                     kotlin.io.println("Eva:${evaRst}")
                 }
             }
-        }
 
-        //評価順にソート
-        QuickSort.sortOfMass(boidsEvaluation, boidsParameters, 0, boidsEvaluation.size-1)
+            //評価順にソート
+            QuickSort.sortOfMass(boidsEvaluation, boidsParameters, 0, boidsEvaluation.size-1)
 
-        /**DEBUG*/
-        for (idx in 0 until MASS){
-            println("$idx: ${boidsEvaluation[idx]}[${boidsParameters}]")
+            /**DEBUG*/
+            for (idx in 0 until MASS){
+                println("$idx: ${boidsEvaluation[idx]}[${boidsParameters}]")
+            }
+
+            //CSVファイル生成
+            var csvw: CSVWriter? = null
+            try { //インスタンス生成
+                csvw = CSVWriter(
+                    FileWriter(File("/Users/minorim_n/IdeaProjects/Boids/out/evaluation", "generation-${generation}.csv"))
+                    , ","[0]
+                    , "\""[0]
+                    , "\""[0]
+                    , "\r\n"
+                )
+                //Stringの配列が1行分のデータになる
+                val outStrList: MutableList<Array<String?>> =
+                    ArrayList()
+                //配列の数には項目数を定義
+
+                //ラベル
+                val outStr = arrayOfNulls<String>(10)
+                outStr[0] = "${generation}世代,順位"
+                outStr[1] = "評価点"
+                outStr[2] = "R分離"
+                outStr[3] = "R整列"
+                outStr[4] = "R結合"
+                outStr[5] = "R逃避"
+                outStr[6] = "P分離"
+                outStr[7] = "P整列"
+                outStr[8] = "P結合"
+                outStr[9] = "P逃避"
+                outStrList.add(outStr)
+
+                //データ
+                for (idx in 0 until MASS){
+                    val boidsParameter = boidsParameters[idx]
+                    val outStr = arrayOf<String?>(
+                        "$idx", "${boidsEvaluation[idx]}",
+                        boidsParameter.separateR.toString(), boidsParameter.alignR.toString(),
+                        boidsParameter.cohesionR.toString(), boidsParameter.avoidR.toString(),
+                        boidsParameter.separateP.toString(), boidsParameter.alignP.toString(),
+                        boidsParameter.cohesionP.toString(), boidsParameter.avoidP.toString()
+                    )
+                    outStrList.add(outStr)
+                }
+
+                //書込み
+                csvw.writeAll(outStrList)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally { // 最後はクローズする
+                csvw?.close()
+            }
+
         }
     }
-
     //進化計算コルーチン用
     suspend fun runAMassSimulation(boidsParameter: BoidsParameter): MutableList<Boid>{
         val boids : MutableList<Boid> = mutableListOf()
