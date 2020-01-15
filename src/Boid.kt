@@ -11,8 +11,8 @@ const val BOID_MAX_SPEED = 2f
 const val BOID_AMOUNT = 600
 
 const val ENEMY_BODY_SIZE = 20f
-const val ENEMY_MAX_FORCE = 0.8f
-const val ENEMY_MAX_SPEED = 10f
+const val ENEMY_MAX_FORCE = 0.5f
+const val ENEMY_MAX_SPEED = 3f
 
 //群衆側の行動
 class BoidBehaviour {
