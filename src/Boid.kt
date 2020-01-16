@@ -10,7 +10,7 @@ data class BoidsParameter(val separateR: Float, val alignR: Float, val cohesionR
 const val BOID_BODY_SIZE = 4f
 const val BOID_MAX_FORCE = 0.03f
 const val BOID_MAX_SPEED = 2f
-const val BOID_AMOUNT = 600
+const val BOID_AMOUNT = 400
 
 const val ENEMY_BODY_SIZE = 20f
 const val ENEMY_MAX_FORCE = 0.5f
@@ -123,15 +123,73 @@ class BoidBehaviour {
             return steer
         }
 
+        fun kabeYokeru(me: Boid): PVector {
+
+            var desiredSeparation = 40.0f
+
+            var others: MutableList<PVector>
+            others = mutableListOf()
+            others.add(PVector(me.position.x, W_SIZE, me.position.z))
+            others.add(PVector(me.position.x, -W_SIZE, me.position.z))
+
+            others.add(PVector(W_SIZE, me.position.y, me.position.z))
+            others.add(PVector(-W_SIZE, me.position.y, me.position.z))
+
+            others.add(PVector(me.position.x, me.position.y, W_SIZE))
+            others.add(PVector(me.position.x, me.position.y, -W_SIZE))
+
+
+            val steer = PVector(0f, 0f, 0f)
+            var count = 0
+
+            for (other in others) {
+                if (me.position.x > W_SIZE || me.position.y > W_SIZE || me.position.z > W_SIZE || me.position.x < -W_SIZE || me.position.y < -W_SIZE || me.position.z < -W_SIZE) {
+                    val diff = PVector.sub(me.position, other).mult(-1.0f)//離れるベクトル
+                    steer.add(diff)
+                    count++
+                    break
+                }
+
+                val d = PVector.dist(me.position,other)
+                //距離が近い
+                if (d < desiredSeparation && d > 0) {
+                    val diff = PVector.sub(me.position, other)//離れるベクトル
+                    diff.normalize()//正規化
+                    diff.div(d)//距離が遠いほど小さくなる
+                    steer.add(diff)
+                    count++
+                }
+            }
+
+            if (count > 0) {
+                steer.div(count.toFloat())//平均化
+            }
+            if (steer.mag() > 0) {
+                steer.normalize()
+                steer.mult(BOID_MAX_SPEED)
+                steer.sub(me.velocity)
+                steer.limit(BOID_MAX_FORCE)
+            }
+
+            return steer
+        }
+
         fun update(me:Boid): Unit {
             me.velocity.add(me.acceleration).limit(BOID_MAX_SPEED)
             me.position.add(me.velocity)
             me.acceleration.mult(0f)
 
+
             //境界線
-            if ((me.position.x > W_SIZE && me.velocity.x > 0) || (me.position.x < -W_SIZE && me.velocity.x < 0)) {me.velocity.x *= -1}
-            if ((me.position.y > W_SIZE && me.velocity.y > 0) || (me.position.y < -W_SIZE && me.velocity.y < 0)) {me.velocity.y *= -1}
-            if ((me.position.z > W_SIZE && me.velocity.z > 0) || (me.position.z < -W_SIZE && me.velocity.z < 0)) {me.velocity.z *= -1}
+//            if ((me.position.x > W_SIZE && me.velocity.x > 0) || (me.position.x < -W_SIZE && me.velocity.x < 0)) {
+//                me.acceleration.x += -me.velocity.x
+//            }
+//            if ((me.position.y > W_SIZE && me.velocity.y > 0) || (me.position.y < -W_SIZE && me.velocity.y < 0)) {
+//                me.acceleration.y += -me.velocity.y
+//            }
+//            if ((me.position.z > W_SIZE && me.velocity.z > 0) || (me.position.z < -W_SIZE && me.velocity.z < 0)) {
+//                me.acceleration.z += -me.velocity.z
+//            }
         }
     }
 }

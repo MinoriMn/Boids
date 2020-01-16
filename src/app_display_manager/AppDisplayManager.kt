@@ -382,12 +382,14 @@ class AppDisplayManager : PApplet (){
            val ali: PVector = BoidBehaviour.align(it, boids, aliR) //整列
            val coh: PVector = BoidBehaviour.cohesion(it, boids, cohR) //結合
            val avo: PVector = BoidBehaviour.avoid(it, enemies, avoR) //逃避
+           val kabeYokeru: PVector = BoidBehaviour.kabeYokeru(it)
+
            //パラメータ調整
            sep.mult(sepP) //分離
            ali.mult(aliP) //整列
            coh.mult(cohP) //結合
            avo.mult(avoP) //逃避
-           it.acceleration.add(sep).add(ali).add(coh).add(avo)
+           it.acceleration.add(sep).add(ali).add(coh).add(avo).add(kabeYokeru)
        }
 
         //position更新
