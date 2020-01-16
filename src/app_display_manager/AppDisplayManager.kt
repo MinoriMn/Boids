@@ -31,6 +31,7 @@ import kotlin.collections.forEach
 import kotlin.collections.isNotEmpty
 import kotlin.collections.mutableListOf
 import kotlin.collections.set
+import kotlin.system.exitProcess
 
 
 //メインウィンドウ
@@ -38,7 +39,7 @@ const val WINDOW_WIDTH = 1440f
 const val WINDOW_HEIGHT = 900f
 
 //ワールド設定
-const val W_SIZE = 600f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
+const val W_SIZE = 500f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
 
 //実行モード
 enum class MODE{
@@ -59,10 +60,10 @@ class AppDisplayManager : PApplet (){
 
     //進化計算用
     private var time = 0//経過時間
-    private val TIME_LIMIT = 1500 //制限時間
+    private val TIME_LIMIT = 3000 //制限時間
     private var generation = 0//世代
-    private val GENERATION_LIMIT = 1//最終世代
-    private val MASS = 20//世代ごとの集団数
+    private val GENERATION_LIMIT = 10//最終世代
+    private val MASS = 50//世代ごとの集団数
 
     //Boid設定
     private lateinit var boids : MutableList<Boid>
@@ -231,56 +232,49 @@ class AppDisplayManager : PApplet (){
                 println("$idx: ${boidsEvaluation[idx]}[${boidsParameters}]")
             }
 
-            //CSVファイル生成
-            var csvw: CSVWriter? = null
-            try { //インスタンス生成
-                csvw = CSVWriter(
-                    FileWriter(File("/Users/minorim_n/IdeaProjects/Boids/out/evaluation", "generation-${generation}.csv"))
-                    , ","[0]
-                    , "\""[0]
-                    , "\""[0]
-                    , "\r\n"
-                )
-                //Stringの配列が1行分のデータになる
-                val outStrList: MutableList<Array<String?>> =
-                    ArrayList()
-                //配列の数には項目数を定義
+            //csv書き出し
+            exportCsv(gen)
 
-                //ラベル
-                val outStr = arrayOfNulls<String>(10)
-                outStr[0] = "${generation}世代,順位"
-                outStr[1] = "評価点"
-                outStr[2] = "R分離"
-                outStr[3] = "R整列"
-                outStr[4] = "R結合"
-                outStr[5] = "R逃避"
-                outStr[6] = "P分離"
-                outStr[7] = "P整列"
-                outStr[8] = "P結合"
-                outStr[9] = "P逃避"
-                outStrList.add(outStr)
+            //次世代
+            if(gen < GENERATION_LIMIT-1){
+                var nextBoidsParameters = Array(MASS) {BoidsParameter(random(BOID_BODY_SIZE*2f, W_SIZE/3f), random(BOID_BODY_SIZE*2f, W_SIZE/3f), 100f, random(ENEMY_BODY_SIZE, W_SIZE/3f), random(1f, 10f), random(1f, 10f) ,random(1f, 10f) ,random(1f, 10f))}
 
-                //データ
-                for (idx in 0 until MASS){
-                    val boidsParameter = boidsParameters[idx]
-                    val outStr = arrayOf<String?>(
-                        "$idx", "${boidsEvaluation[idx]}",
-                        boidsParameter.separateR.toString(), boidsParameter.alignR.toString(),
-                        boidsParameter.cohesionR.toString(), boidsParameter.avoidR.toString(),
-                        boidsParameter.separateP.toString(), boidsParameter.alignP.toString(),
-                        boidsParameter.cohesionP.toString(), boidsParameter.avoidP.toString()
-                    )
-                    outStrList.add(outStr)
+                var idx = 0
+                //エリート保存戦略
+                val mass10per = MASS/10
+                while (idx < mass10per){
+                    //評価点が1より大きいなら残す
+                    if(boidsEvaluation[idx] > 1f){
+                        nextBoidsParameters[idx] = boidsParameters[idx]
+                    }else{
+                        break
+                    }
+                    idx++
                 }
 
-                //書込み
-                csvw.writeAll(outStrList)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally { // 最後はクローズする
-                csvw?.close()
-            }
+                val parentsIdx = idx
+                if(parentsIdx != 0){
+                    val mass90per = MASS/10*9
+                    val mutation = 0.01f //突然変異確率
+                    while(idx < mass90per){
+                        nextBoidsParameters[idx] =
+                            BoidsParameter(
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].separateR + random(-BOID_BODY_SIZE, BOID_BODY_SIZE) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].separateR,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].alignR+ random(-BOID_BODY_SIZE, BOID_BODY_SIZE) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].alignR,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].cohesionR + random(-BOID_BODY_SIZE, BOID_BODY_SIZE) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].cohesionR,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].avoidR + random(-BOID_BODY_SIZE, BOID_BODY_SIZE) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].avoidR,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].separateP + random(-1f, 1f) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].separateP,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].alignP + random(-1f, 1f) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].alignP,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].cohesionP + random(-1f, 1f) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].cohesionP,
+                                if(random(1f) > mutation) boidsParameters[random(0f, parentsIdx.toFloat()).toInt()].avoidP + random(-1f, 1f) else nextBoidsParameters[random(mass90per.toFloat(), MASS.toFloat()).toInt()].avoidP
+                            )
+                        idx++
+                    }
+                }
 
+                //世代交代
+                boidsParameters = nextBoidsParameters
+            }
         }
     }
     //進化計算コルーチン用
@@ -307,12 +301,65 @@ class AppDisplayManager : PApplet (){
         while (time++ < TIME_LIMIT){
             boidsUpdate(boids, boidsParameter)
             enemiesUpdate(enemies, boids)
-            if(boids.size == 0){//全滅時は強制終了
+            if(boids.size  < BOID_AMOUNT * 0.5){//半数以下まで個体数が減った時は強制終了
                 break
             }
         }
 
         return boids
+    }
+
+    private fun exportCsv(generation: Int){
+        //CSVファイル生成
+        var csvw: CSVWriter? = null
+        try { //インスタンス生成
+            csvw = CSVWriter(
+                FileWriter(File("/Users/minorim_n/IdeaProjects/Boids/out/evaluation", "generation-${generation}.csv"))
+                , ","[0]
+                , "\""[0]
+                , "\""[0]
+                , "\r\n"
+            )
+            //Stringの配列が1行分のデータになる
+            val outStrList: MutableList<Array<String?>> =
+                ArrayList()
+            //配列の数には項目数を定義
+
+            //ラベル
+            val outStr = arrayOfNulls<String>(10)
+            outStr[0] = "${generation}世代,順位"
+            outStr[1] = "評価点"
+            outStr[2] = "R分離"
+            outStr[3] = "R整列"
+            outStr[4] = "R結合"
+            outStr[5] = "R逃避"
+            outStr[6] = "P分離"
+            outStr[7] = "P整列"
+            outStr[8] = "P結合"
+            outStr[9] = "P逃避"
+            outStrList.add(outStr)
+
+            //データ
+            for (idx in 0 until MASS){
+                val boidsParameter = boidsParameters[idx]
+                val outStr = arrayOf<String?>(
+                    "$idx", "${boidsEvaluation[idx]}",
+                    boidsParameter.separateR.toString(), boidsParameter.alignR.toString(),
+                    boidsParameter.cohesionR.toString(), boidsParameter.avoidR.toString(),
+                    boidsParameter.separateP.toString(), boidsParameter.alignP.toString(),
+                    boidsParameter.cohesionP.toString(), boidsParameter.avoidP.toString()
+                )
+                outStrList.add(outStr)
+            }
+
+            //書込み
+            csvw.writeAll(outStrList)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally { // 最後はクローズする
+            csvw?.close()
+        }
+
     }
 
     //更新------------------------------------------------------------------

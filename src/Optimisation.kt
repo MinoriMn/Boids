@@ -1,3 +1,4 @@
+import app_display_manager.W_SIZE
 import processing.core.PVector
 import kotlin.math.exp
 
@@ -22,15 +23,49 @@ class Optimisation {
             }else{
                 //残存数
                 val r = boids.size.toFloat()
+                if(r > BOID_AMOUNT * 0.5){
+                    //グループ数カウント
+                    val tmpBG = ArrayList<MutableList<Boid>>()
+                    copiedBoids = boids.toMutableList()
+                    groupNum = countGroup(copiedBoids, tmpBG).toFloat()
+                    boidsGroups = tmpBG
+                    var evaRadius = 0f
+                    var sumV= 0f
 
-                //グループ数カウント
-                boidsGroups = ArrayList()
-                copiedBoids = boids.toMutableList()
-                val groupNum = countGroup(copiedBoids, boidsGroups!!).toFloat()
-                //シグモイド関数の適応
-                gEva = 1f / (1f + exp(3f * groupNum - 9f))
+                    if(groupNum.toInt() != 0) {
+                        //グループの大きさ
+                        var maxSize = tmpBG[0].size
+                        var maxGroupIdx = 0
+                        for (i in 1 until tmpBG.size) {
+                            if (tmpBG[i].size > maxSize) {
+                                maxSize = tmpBG[i].size
+                                maxGroupIdx = i
+                            }
+                        }
+                        var sumDist = 1f
+                        val getRandNum = 100
+                        for (i in 0..getRandNum) {
+                            sumDist += PVector.dist(
+                                tmpBG[maxGroupIdx].random().position,
+                                tmpBG[maxGroupIdx].random().position
+                            )
+                        }
+                        evaRadius = W_SIZE * (getRandNum / sumDist)
 
-                r * gEva
+                        //速度
+                        for (i in 0..getRandNum) {
+                            sumV += tmpBG[maxGroupIdx].random().velocity.mag()
+                        }
+                        sumV /= getRandNum
+                    }
+
+                    //シグモイド関数の適応
+                    gEva = 1f / (1f + exp(3f * groupNum - 9f))
+
+                    r * gEva * evaRadius * sumV
+                }else{
+                    0f
+                }
             }
             return evaRst
         }
