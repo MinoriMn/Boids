@@ -10,6 +10,7 @@ import ENEMY_BODY_SIZE
 import EnemyBehaviour
 import Optimisation
 import QuickSort
+import au.com.bytecode.opencsv.CSVReader
 import au.com.bytecode.opencsv.CSVWriter
 import boundBoidsNumber
 import evaRst
@@ -23,15 +24,11 @@ import processing.core.PApplet
 import processing.core.PConstants
 import processing.core.PVector
 import java.io.File
+import java.io.FileReader
 import java.io.FileWriter
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.collections.MutableList
-import kotlin.collections.forEach
-import kotlin.collections.isNotEmpty
-import kotlin.collections.mutableListOf
 import kotlin.collections.set
-import kotlin.system.exitProcess
 
 
 //メインウィンドウ
@@ -88,7 +85,7 @@ class AppDisplayManager : PApplet (){
                 "EVOLUTION" -> MODE.EVOLUTION
                 else -> MODE.NORMAL
             }
-            if (theArgs[1].equals("FULL_RANDOM")) {
+            if (theArgs.count() > 1 && theArgs[1].contains("FULL_RANDOM")) {
                 isFulLRandom = true
             }
         }
@@ -98,7 +95,19 @@ class AppDisplayManager : PApplet (){
             if(theArgs.size >= 3){
                 val gen = theArgs[1].toInt()
                 val massNum = theArgs[2].toInt()
-                boidsParameters = Array(1) {BoidsParameter(20.0f, 100f, 100f, 70f +  ENEMY_BODY_SIZE, 1.5f, 1f ,1f ,10f)}
+                val path = System.getProperty("user.dir")
+                val reader: CSVReader = CSVReader(FileReader(File("${path}/evaluation", "generation-${gen}.csv")))
+                val data = reader.readAll()
+                val params = data[massNum]
+                val param_names = data[0]
+
+                for ((index, param) in params.withIndex()) {
+                    println(param_names[index] + " : " + param)
+                }
+
+
+                // "1世代,順位","評価点","R分離","R整列","R結合","R逃避","P分離","P整列","P結合","P逃避"
+                boidsParameters = Array(1) {BoidsParameter(params[2].toFloat(), params[3].toFloat(), params[4].toFloat(), params[5].toFloat(), params[6].toFloat(), params[7].toFloat() ,params[8].toFloat() ,params[9].toFloat())}
             }else{
                 /**DEBUG*/
                 boidsParameters = Array(1) {BoidsParameter(20.0f, 100f, 100f, 70f +  ENEMY_BODY_SIZE, 1.5f, 1f ,1f ,10f)}
@@ -281,6 +290,7 @@ class AppDisplayManager : PApplet (){
             }
         }
     }
+
     //進化計算コルーチン用
     suspend fun runAMassSimulation(boidsParameter: BoidsParameter): MutableList<Boid>{
         val boids : MutableList<Boid> = mutableListOf()
@@ -316,9 +326,10 @@ class AppDisplayManager : PApplet (){
     private fun exportCsv(generation: Int){
         //CSVファイル生成
         var csvw: CSVWriter? = null
+        val path = System.getProperty("user.dir")
         try { //インスタンス生成
             csvw = CSVWriter(
-                FileWriter(File("/Users/minorim_n/IdeaProjects/Boids/evaluation", "generation-${generation}.csv"))
+                FileWriter(File("${path}/evaluation", "generation-${generation}.csv"))
                 , ","[0]
                 , "\""[0]
                 , "\""[0]
@@ -458,6 +469,7 @@ class AppDisplayManager : PApplet (){
         }
 
     }
+
     //enemiesの描画
     private fun enemiesRender() {
         noFill()
