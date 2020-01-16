@@ -37,6 +37,8 @@
 # *.iml
 # *.ipr
 
+Boids.iml
+
 # CMake
 cmake-build-*/
 
