@@ -48,6 +48,7 @@ enum class MODE{
     NORMAL_EVALUATION //評価関数の確認用
 }
 var mode = MODE.NORMAL
+var isFulLRandom = false
 
 var theArgs : Array<String> = arrayOf()
 class AppDisplayManager : PApplet (){
@@ -62,7 +63,7 @@ class AppDisplayManager : PApplet (){
     private var time = 0//経過時間
     private val TIME_LIMIT = 3000 //制限時間
     private var generation = 0//世代
-    private val GENERATION_LIMIT = 10//最終世代
+    private val GENERATION_LIMIT = 1//最終世代
     private val MASS = 50//世代ごとの集団数
 
     //Boid設定
@@ -86,6 +87,9 @@ class AppDisplayManager : PApplet (){
             mode = when (theArgs[0]) {
                 "EVOLUTION" -> MODE.EVOLUTION
                 else -> MODE.NORMAL
+            }
+            if (theArgs[1].equals("FULL_RANDOM")) {
+                isFulLRandom = true
             }
         }
 
@@ -255,7 +259,7 @@ class AppDisplayManager : PApplet (){
                 val parentsIdx = idx
                 if(parentsIdx != 0){
                     val mass90per = MASS/10*9
-                    val mutation = 0.01f //突然変異確率
+                    val mutation = 0.5f //突然変異確率
                     while(idx < mass90per){
                         nextBoidsParameters[idx] =
                             BoidsParameter(
