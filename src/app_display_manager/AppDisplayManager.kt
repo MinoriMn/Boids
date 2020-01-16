@@ -314,7 +314,7 @@ class AppDisplayManager : PApplet (){
         var csvw: CSVWriter? = null
         try { //インスタンス生成
             csvw = CSVWriter(
-                FileWriter(File("/Users/minorim_n/IdeaProjects/Boids/out/evaluation", "generation-${generation}.csv"))
+                FileWriter(File("/Users/minorim_n/IdeaProjects/Boids/evaluation", "generation-${generation}.csv"))
                 , ","[0]
                 , "\""[0]
                 , "\""[0]
