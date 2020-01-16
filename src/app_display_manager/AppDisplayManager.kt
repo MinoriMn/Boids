@@ -36,7 +36,7 @@ const val WINDOW_WIDTH = 1440f
 const val WINDOW_HEIGHT = 900f
 
 //ワールド設定
-const val W_SIZE = 500f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
+const val W_SIZE = 600f //立方体を想定。その中心を0としたときの面までの最短距離(つまり一辺の半分の長さ)
 
 //実行モード
 enum class MODE{
@@ -397,18 +397,24 @@ class AppDisplayManager : PApplet (){
            val ali: PVector = BoidBehaviour.align(it, boids, aliR) //整列
            val coh: PVector = BoidBehaviour.cohesion(it, boids, cohR) //結合
            val avo: PVector = BoidBehaviour.avoid(it, enemies, avoR) //逃避
+           val kabeYokeru: PVector = BoidBehaviour.kabeYokeru(it)
+
            //パラメータ調整
            sep.mult(sepP) //分離
            ali.mult(aliP) //整列
            coh.mult(cohP) //結合
            avo.mult(avoP) //逃避
-           it.acceleration.add(sep).add(ali).add(coh).add(avo)
+           kabeYokeru.mult(2f)
+           it.acceleration.add(sep).add(ali).add(coh).add(avo).add(kabeYokeru)
        }
 
         //position更新
-        boids.forEach{
-            BoidBehaviour.update(it)
+        val boidsIterator = boids.listIterator()
+        while (boidsIterator.hasNext()){
+            BoidBehaviour.update(boidsIterator.next(), boidsIterator)
         }
+
+
     }
     //enemiesの更新
     private fun enemiesUpdate(enemies: MutableList<Boid>, boids: MutableList<Boid>) {
