@@ -125,7 +125,7 @@ class BoidBehaviour {
 
         fun kabeYokeru(me: Boid): PVector {
 
-            var desiredSeparation = 40.0f
+            var desiredSeparation = BOID_BODY_SIZE * 5f
 
             var others: MutableList<PVector>
             others = mutableListOf()
@@ -174,22 +174,25 @@ class BoidBehaviour {
             return steer
         }
 
-        fun update(me:Boid): Unit {
+        fun update(me:Boid, boidsIterator: MutableIterator<Boid>): Unit {
             me.velocity.add(me.acceleration).limit(BOID_MAX_SPEED)
             me.position.add(me.velocity)
             me.acceleration.mult(0f)
 
 
             //境界線
-//            if ((me.position.x > W_SIZE && me.velocity.x > 0) || (me.position.x < -W_SIZE && me.velocity.x < 0)) {
-//                me.acceleration.x += -me.velocity.x
-//            }
-//            if ((me.position.y > W_SIZE && me.velocity.y > 0) || (me.position.y < -W_SIZE && me.velocity.y < 0)) {
-//                me.acceleration.y += -me.velocity.y
-//            }
-//            if ((me.position.z > W_SIZE && me.velocity.z > 0) || (me.position.z < -W_SIZE && me.velocity.z < 0)) {
-//                me.acceleration.z += -me.velocity.z
-//            }
+            if ((me.position.x > W_SIZE && me.velocity.x > 0) || (me.position.x < -W_SIZE && me.velocity.x < 0)) {
+                boidsIterator.remove()
+                return
+            }
+            if ((me.position.y > W_SIZE && me.velocity.y > 0) || (me.position.y < -W_SIZE && me.velocity.y < 0)) {
+                boidsIterator.remove()
+                return
+            }
+            if ((me.position.z > W_SIZE && me.velocity.z > 0) || (me.position.z < -W_SIZE && me.velocity.z < 0)) {
+                boidsIterator.remove()
+                return
+            }
         }
     }
 }
